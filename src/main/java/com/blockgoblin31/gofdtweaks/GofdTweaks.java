@@ -39,6 +39,7 @@ public class GofdTweaks {
     }
 
     public GofdTweaks(FMLJavaModLoadingContext context) {
-
+        IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
+        ModBlocks.register(bus);
     }
 }
