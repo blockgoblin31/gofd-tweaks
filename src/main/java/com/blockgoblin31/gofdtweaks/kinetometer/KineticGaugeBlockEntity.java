@@ -99,7 +99,7 @@ public class KineticGaugeBlockEntity extends GaugeBlockEntity {
             CreateLang.text(TooltipHelper.makeProgressBar(3, (int) (getPersistentData().getFloat("display_total_stored") / (102400 * getPersistentData().getFloat("display_flywheel_count")) * 3))).style(ChatFormatting.GRAY).forGoggles(tooltip);
             CreateLang.translate("gui.kineticometer.remaining_storage", new Object[0]).style(ChatFormatting.GRAY).forGoggles(tooltip);
             float stored = getPersistentData().getFloat("display_total_stored");
-            float cap = (102400 * getPersistentData().getFloat("display_flywheel_count"));
+            float cap = getPersistentData().getFloat("display_total_storage");
             if(stored != cap) CreateLang.text(stored + "su / ").text(String.valueOf(cap)).forGoggles(tooltip);
             else CreateLang.text(stored + "su").forGoggles(tooltip);
 //            if(networkData != null) {
@@ -143,8 +143,9 @@ public class KineticGaugeBlockEntity extends GaugeBlockEntity {
         this.computerBehaviour.removePeripheral();
     }
 
-    public void setDisplay(float totalStored, Integer size) {
+    public void setDisplay(float totalStored, float totalStorage, Integer size) {
         getPersistentData().putFloat("display_total_stored", totalStored);
+        getPersistentData().putFloat("display_total_storage", totalStorage);
         if(size != null) getPersistentData().putFloat("display_flywheel_count", size);
     }
 }

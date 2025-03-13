@@ -25,7 +25,7 @@ public class NetworkFlywheels {
         }
 
         public KineticNetwork network;
-        public Set<FlywheelBlockEntity> flywheels = new HashSet<>();
+        public Set<IKineticFlywheel> flywheels = new HashSet<>();
 
         public void update() {
             if(network == null) return;
@@ -36,13 +36,13 @@ public class NetworkFlywheels {
             flywheels.clear();
 
             network.members.forEach((k,v) -> {
-                if(k.getClass() == FlywheelBlockEntity.class) flywheels.add((FlywheelBlockEntity) k);
+                if(k instanceof IKineticFlywheel) flywheels.add((IKineticFlywheel) k);
             });
             updateKineticometors(flywheels.size());
 
 
             if(overLoadStress > 0) stress = overLoadStress;
-            ArrayList<FlywheelBlockEntity> flywheelsList = new ArrayList<>(flywheels);
+            ArrayList<IKineticFlywheel> flywheelsList = new ArrayList<>(flywheels);
 
             for(int i = flywheelsList.size() - 1; i > 0; i--) {
                 if(!flywheelsList.get(i).canStoreMoreSU()) flywheelsList.remove(i);
@@ -58,7 +58,14 @@ public class NetworkFlywheels {
         public float getTotalStored() {
             AtomicReference<Float> total = new AtomicReference<>((float) 0);
             network.members.forEach((k,v) -> {
-                if(k.getClass() == FlywheelBlockEntity.class) total.updateAndGet(v1 -> new Float((float) (v1 + ((FlywheelBlockEntity) k).getStoredSU())));
+                if(k instanceof IKineticFlywheel) total.updateAndGet(v1 -> new Float((float) (v1 + ((IKineticFlywheel) k).getStoredSU())));
+            });
+            return total.get();
+        }
+        public float getMaxStorage() {
+            AtomicReference<Float> total = new AtomicReference<>((float) 0);
+            network.members.forEach((k,v) -> {
+                if(k instanceof IKineticFlywheel) total.updateAndGet(v1 -> new Float((float) (v1 + ((IKineticFlywheel) k).getMaxStorage())));
             });
             return total.get();
         }
@@ -66,7 +73,7 @@ public class NetworkFlywheels {
         public void updateKineticometors(Integer flywheelCount) {
             if(network != null) network.members.forEach((k,v) -> {
                 if(k.getClass() == KineticGaugeBlockEntity.class) {
-                    ((KineticGaugeBlockEntity) k).setDisplay(getTotalStored(), flywheelCount);
+                    ((KineticGaugeBlockEntity) k).setDisplay(getTotalStored(), getMaxStorage(), flywheelCount);
                 }
             });
         }
