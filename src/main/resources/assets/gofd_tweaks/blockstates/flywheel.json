@@ -1,0 +1,16 @@
+{
+    "variants": {
+        "axis=x": {
+            "model": "gofd_tweaks:block/flywheel",
+            "x": 90,
+            "y": 90
+        },
+        "axis=y": {
+            "model": "gofd_tweaks:block/flywheel"
+        },
+        "axis=z": {
+            "model": "gofd_tweaks:block/flywheel",
+            "x": 90
+        }
+    }
+}

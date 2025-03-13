@@ -1,12 +1,13 @@
 {
-  "package": "com.blockgoblin31.gofdtweaks.mixins",
-  "compatibilityLevel": "JAVA_17",
-  "refmap": "mixins.gofd_tweaks.refmap.json",
-  "minVersion": "0.8.4",
-  "mixins": [
-    "BeamCannonBlockEntityMixin",
-    "VillageSpawnPointMixin"
-  ],
-  "client": [
+    "package": "com.blockgoblin31.gofdtweaks.mixins",
+    "compatibilityLevel": "JAVA_17",
+    "refmap": "mixins.gofd_tweaks.refmap.json",
+    "minVersion": "0.8.4",
+    "mixins": [
+        "BeamCannonBlockEntityMixin",
+        "KineticNetworkMixin",
+        "VillageSpawnPointMixin"
+    ],
+    "client": [
   ]
 }

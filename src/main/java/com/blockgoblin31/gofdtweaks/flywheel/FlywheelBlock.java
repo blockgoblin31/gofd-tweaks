@@ -42,7 +42,7 @@ public class FlywheelBlock extends RotatedPillarKineticBlock implements IBE<Flyw
     }
 
     public BlockEntityType<? extends FlywheelBlockEntity> getBlockEntityType() {
-        return (BlockEntityType) ModBlocks.FLYWHEEL_BLOCK_ENTITY.get();
+        return (BlockEntityType) ModBlocks.FLYWHEEL_SOMETHING.get();
     }
 
     public boolean hasShaftTowards(LevelReader world, BlockPos pos, BlockState state, Direction face) {

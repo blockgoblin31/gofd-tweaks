@@ -12,8 +12,10 @@ import net.createmod.catnip.animation.LerpedFloat;
 import net.createmod.catnip.animation.LerpedFloat.Chaser;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import org.stringtemplate.v4.ST;
 
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
@@ -21,9 +23,14 @@ import java.util.logging.Logger;
 public class FlywheelBlockEntity extends KineticBlockEntity {
     LerpedFloat visualSpeed = LerpedFloat.linear();
     float angle;
+    float direction;
+    float lastDirection = 0;
 
-    public FlywheelBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlocks.FLYWHEEL_BLOCK_ENTITY.get(), pos, state);
+    private final String AVAILABLE_SU = "available_su";
+    private final String STORED_SU = "stored_su";
+
+    public FlywheelBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
+        super(type, pos, state);
     }
 
     protected AABB createRenderBoundingBox() {
@@ -46,76 +53,52 @@ public class FlywheelBlockEntity extends KineticBlockEntity {
         super.tick();
         if (this.level.isClientSide) {
             float targetSpeed = this.getSpeed();
-            this.visualSpeed.updateChaseTarget(targetSpeed);
+            float viewSpeed = getPersistentData().getFloat(STORED_SU) / maxStorage * 256 * getDirection();
+            if(viewSpeed != Float.NaN) this.visualSpeed.updateChaseTarget(viewSpeed);
             this.visualSpeed.tickChaser();
             this.angle += this.visualSpeed.getValue() * 3.0F / 10.0F;
             this.angle %= 360.0F;
+            direction = getDirection();
+            //this.wheelAngle += maxStorage / getPersistentData().getFloat(STORED_SU) * 256 * 60 * 360 / 20;
         }
+        float stored = getPersistentData().getFloat(STORED_SU);
+        float add = getPersistentData().getFloat(AVAILABLE_SU);
 
-    }
-
-    float maxLoad = 1024;
-    @Override
-    public void updateFromNetwork(float maxStress, float currentStress, int networkSize) {
-        super.updateFromNetwork(maxStress, currentStress, networkSize);
-
-        KineticNetwork network = getOrCreateNetwork();
-        float lastLoad = getPersistentData().getFloat("last_load_value");
-        float lastBoost = getPersistentData().getFloat("last_boost");
-        float availableStress = maxStress - currentStress;
-        float availableStressLoad = availableStress + lastLoad;
-        float neededStressBoost = availableStress + lastBoost;
-
-        if(network != null) {
-            //network.updateCapacityFor(this, neededStressBoost < 0 ? Math.min(-neededStressBoost, 1024 / speed / 4) : 0);
-            //getPersistentData().putFloat("last_boost", neededStressBoost < 0 ? Math.min(-neededStressBoost, 1024 / speed / 4) : 0)
-
-            /*float loadValue = availableStressLoad > 0 ? Math.min(availableStressLoad, 1024 / speed / 4) : 0;
-            if(lastLoad != loadValue) {
-                network.updateStressFor(this, loadValue);
-                getPersistentData().putFloat("last_load_value", loadValue);
-
-            }*/
-
-            //if(availableStress == 0 && lastLoad > 0) return;
-            if((availableStress < 0 && lastLoad > 0) || (availableStress > 0 && lastLoad < maxLoad) || !network.members.containsKey(this)) {
-                //getPersistentData().putFloat("last_load_value", Math.max(Math.min(lastLoad + availableStress, maxLoad),0));
-                getPersistentData().putFloat("last_load_value", Math.max(Math.min(lastLoad + availableStress, maxLoad),0));
-                network.updateStressFor(this, Math.max(Math.min(lastLoad + availableStress, maxLoad) / speed,0));
-            }
-
-            if((availableStress < 0 && lastBoost < maxStress) || (availableStress > 0 && lastBoost > 0) || !network.sources.containsKey(this)) {
-                //getPersistentData().putFloat("last_boost", Math.max(Math.min(lastBoost - availableStress, maxLoad),0));
-                //network.updateCapacityFor(this, Math.max(Math.min(lastBoost - availableStress, maxLoad) / speed,0));
-
-            }
+        if(stored < maxStorage && add > 0 && stored + add <= maxStorage) {
+            getPersistentData().putFloat(STORED_SU, stored + add);
+            NetworkFlywheels.get(getOrCreateNetwork()).updateKineticometors(null);
         }
+        else NetworkFlywheels.get(getOrCreateNetwork()).update();
+    }
+    float getDirection() {
+        if(getSpeed() > 0) {
+            lastDirection = 1;
+            return 1;
+        }
+        if(getSpeed() < 0) {
+            lastDirection = -1;
+            return -1;
+        }
+        return lastDirection;
     }
 
-    @Override
-    public float calculateStressApplied() {
-        //CompoundTag tag = null;
-        //read(tag, true);
-
-        //float capacity = tag.getFloat("capacity");
-        //float strsess = tag.getFloat("stress");
-        float availableStress = capacity - stress;
-        return availableStress > 0 ? Math.min(availableStress, 1024) : 0;
+    public final float maxStorage = 102400;
+    public float storeSU(float amount) {
+        float stored = getPersistentData().getFloat(STORED_SU);
+        if(stored < maxStorage) {
+            float add = Math.min(maxStorage - stored, amount);
+            getPersistentData().putFloat(AVAILABLE_SU, add);
+            return add;
+        }
+        else getPersistentData().putFloat(AVAILABLE_SU, 0);
+        return 0;
+    }
+    public boolean canStoreMoreSU() {
+        float stored = getPersistentData().getFloat(STORED_SU);
+        return stored < maxStorage;
     }
 
-    @Override
-    public float calculateAddedStressCapacity() {
-        float availableStress = capacity - stress;
-        return availableStress < 0 ? Math.min(-availableStress, 1024) : 0;
-    }
-
-    @Override
-    public float getGeneratedSpeed() {
-        return 33;
-    }
-
-    @Override
-    public boolean isOverStressed() {
-        return super.isOverStressed();
+    public float getStoredSU() {
+        return getPersistentData().getFloat(STORED_SU);
     }
 }

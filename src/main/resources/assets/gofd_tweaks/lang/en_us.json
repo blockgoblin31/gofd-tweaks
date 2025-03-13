@@ -1,0 +1,5 @@
+{
+    "create.gui.kineticometer.title": "Gauge Information",
+    "create.gui.kineticometer.network_storage": "Network Storage",
+    "create.gui.kineticometer.remaining_storage": "Remaining Capacity"
+}
